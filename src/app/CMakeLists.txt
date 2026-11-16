@@ -1,0 +1,10 @@
+add_executable(git-credential-manager main.cpp)
+# Host provider libraries are linked as they are ported.
+set(gcm_provider_libs)
+foreach(lib gcmazrepos gcmbitbucket gcmgithub gcmgitlab)
+  if(TARGET ${lib})
+    list(APPEND gcm_provider_libs ${lib})
+  endif()
+endforeach()
+target_link_libraries(git-credential-manager PRIVATE ${gcm_provider_libs} gcmcore)
+install(TARGETS git-credential-manager RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -1,0 +1,12 @@
+---
+# Every if/else/for/while/do body must be wrapped in braces, even single statements.
+Checks: >
+  -*,
+  readability-braces-around-statements
+HeaderFilterRegex: '/(src|tests)/'
+# Skip generated code (moc/uic output) in build directories
+ExcludeHeaderFilterRegex: '/build[^/]*/'
+CheckOptions:
+  # 0 = require braces regardless of how many lines the body spans
+  readability-braces-around-statements.ShortStatementLines: 0
+...

@@ -1,0 +1,33 @@
+find_package(Qt6 6.5 REQUIRED COMPONENTS Test)
+
+# Shared mocks / fakes (port of src/TestInfrastructure) plus the multi-class Qt Test runner.
+file(GLOB_RECURSE infra_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/infra/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/infra/*.h")
+add_library(gcmtestinfra STATIC ${infra_sources})
+target_include_directories(gcmtestinfra PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(gcmtestinfra PUBLIC gcmcore Qt6::Test)
+
+# gcm_test(<name> <dir> [libs...]): one test executable from every *.cpp in <dir> (recursive).
+function(gcm_test name dir)
+  file(GLOB_RECURSE sources CONFIGURE_DEPENDS "${dir}/*.cpp" "${dir}/*.h")
+  if(NOT sources)
+    return()
+  endif()
+  foreach(lib IN LISTS ARGN)
+    if(NOT TARGET ${lib})
+      return()
+    endif()
+  endforeach()
+  add_executable(${name} ${sources})
+  target_include_directories(${name} PRIVATE "${dir}")
+  target_link_libraries(${name} PRIVATE ${ARGN} gcmtestinfra gcmcore Qt6::Test)
+  add_test(NAME ${name} COMMAND ${name})
+  set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endfunction()
+
+foreach(part base gitcfg app net stores)
+  gcm_test(test_core_${part} "${CMAKE_CURRENT_SOURCE_DIR}/core/${part}")
+endforeach()
+gcm_test(test_github "${CMAKE_CURRENT_SOURCE_DIR}/github" gcmgithub)
+gcm_test(test_gitlab "${CMAKE_CURRENT_SOURCE_DIR}/gitlab" gcmgitlab)
+gcm_test(test_bitbucket "${CMAKE_CURRENT_SOURCE_DIR}/bitbucket" gcmbitbucket)
+gcm_test(test_azrepos "${CMAKE_CURRENT_SOURCE_DIR}/azrepos" gcmazrepos)
