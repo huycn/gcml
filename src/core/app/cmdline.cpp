@@ -73,10 +73,21 @@ const Option *findOption(const QList<Option> &options, const QString &alias)
 
 QString optionLabel(const Option &option)
 {
-    // Short aliases first, like System.CommandLine: "-o, --output <output>"
+    // Sorted like System.CommandLine: by prefix ("-" before "--"), then by name, ignoring case:
+    // "-?, -h, --help", "-o, --output <output>", "--browser, --web"
     QStringList aliases = option.aliases;
-    std::stable_sort(aliases.begin(), aliases.end(), [](const QString &a, const QString &b) {
-        return !a.startsWith(QLatin1String("--")) && b.startsWith(QLatin1String("--"));
+    auto split = [](const QString &alias) {
+        qsizetype n = 0;
+        while (n < alias.size() && alias[n] == QLatin1Char('-')) {
+            ++n;
+        }
+        return std::pair<QString, QString>(alias.left(n), alias.mid(n));
+    };
+    std::stable_sort(aliases.begin(), aliases.end(), [&](const QString &a, const QString &b) {
+        const auto [pa, na] = split(a);
+        const auto [pb, nb] = split(b);
+        const int byPrefix = pa.compare(pb, Qt::CaseInsensitive);
+        return byPrefix != 0 ? byPrefix < 0 : na.compare(nb, Qt::CaseInsensitive) < 0;
     });
     QString label = aliases.join(QStringLiteral(", "));
     if (option.takesValue) {
@@ -134,8 +145,17 @@ QString CommandLineParser::helpText(const QList<const Command *> &commandPath) c
     for (qsizetype i = 1; i < commandPath.size(); ++i) {
         usage.append(commandPath[i]->name());
     }
+    // HelpBuilder.FormatArgumentUsage: an optional argument opens a bracket that is closed after the last argument
+    QString argumentUsage;
+    qsizetype openBrackets = 0;
     for (const Argument &argument : command->arguments()) {
-        usage.append(argument.required ? QStringLiteral("<%1>").arg(argument.name) : QStringLiteral("[<%1>]").arg(argument.name));
+        const bool isOptional = argument.multiParented || !argument.required;
+        argumentUsage += isOptional ? QStringLiteral("[<%1> ").arg(argument.name) : QStringLiteral("<%1> ").arg(argument.name);
+        openBrackets += isOptional ? 1 : 0;
+    }
+    if (!argumentUsage.isEmpty()) {
+        argumentUsage.chop(1);
+        usage.append(argumentUsage + QString(openBrackets, QLatin1Char(']')));
     }
 
     const bool hasVisibleCommands = std::any_of(command->commands().begin(), command->commands().end(), [](const auto &c) { return !c->isHidden(); });
@@ -174,16 +194,20 @@ QString CommandLineParser::helpText(const QList<const Command *> &commandPath) c
                 continue;
             }
             QString label = c->name();
+            // (the sub-command rows show every argument as "<name>", whatever its arity)
             for (const Argument &argument : c->arguments()) {
-                label += argument.required ? QStringLiteral(" <%1>").arg(argument.name) : QStringLiteral(" [<%1>]").arg(argument.name);
+                label += QStringLiteral(" <%1>").arg(argument.name);
             }
             rows.append({label, c->description()});
         }
         text += QStringLiteral("\nCommands:\n");
         appendTable(text, rows);
     } else {
-        // (System.CommandLine's empty sub-commands section)
+        // (System.CommandLine's empty sub-commands section, and one more line after a command with arguments)
         text += QLatin1Char('\n');
+        if (!command->arguments().isEmpty()) {
+            text += QLatin1Char('\n');
+        }
     }
     return text + QLatin1Char('\n');
 }
@@ -300,6 +324,13 @@ int CommandLineParser::invoke(const QStringList &args)
         for (const Option &option : options) {
             if (option.required && !result.has(option.aliases.first())) {
                 errors.append(QStringLiteral("Option '%1' is required.").arg(option.aliases.first()));
+            }
+        }
+    }
+    if (errors.isEmpty()) {
+        for (const auto &validator : command->validators()) {
+            if (const OptString error = validator(result)) {
+                errors.append(*error);
             }
         }
     }

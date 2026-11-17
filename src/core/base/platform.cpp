@@ -342,12 +342,13 @@ bool ChildProcess::start()
         m_exitTraced = true; // nothing ran
         return false;
     }
+    m_pid = m_process->processId();
     return true;
 }
 
 qint64 ChildProcess::id() const
 {
-    return m_process->processId();
+    return m_pid;
 }
 
 void ChildProcess::writeStandardInput(const QByteArray &data)
@@ -446,7 +447,7 @@ void ChildProcess::traceExit()
         return;
     }
     m_exitTraced = true;
-    Trace2::writeChildExit(m_trace2Id, m_startTime, int(m_process->processId()), exitCode());
+    Trace2::writeChildExit(m_trace2Id, m_startTime, int(m_pid), exitCode());
 }
 
 std::unique_ptr<ChildProcess> ProcessManager::createProcess(const QString &path, const QString &args, const QString &workingDirectory, Trace2ProcessClass processClass)

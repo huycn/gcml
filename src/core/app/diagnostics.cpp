@@ -69,6 +69,60 @@ QStringList DiagnosticResult::exceptions() const
 
 namespace {
 
+/// The .NET type name (with namespace) of an exception type of this port, as Exception.ToString() prints it.
+QString dotnetTypeName(const Exception &ex)
+{
+    static const QHash<QString, QString> namespaces = {
+        { QStringLiteral("Exception"), QStringLiteral("System") },
+        { QStringLiteral("ArgumentException"), QStringLiteral("System") },
+        { QStringLiteral("ArgumentNullException"), QStringLiteral("System") },
+        { QStringLiteral("ArgumentOutOfRangeException"), QStringLiteral("System") },
+        { QStringLiteral("InvalidOperationException"), QStringLiteral("System") },
+        { QStringLiteral("NotSupportedException"), QStringLiteral("System") },
+        { QStringLiteral("PlatformNotSupportedException"), QStringLiteral("System") },
+        { QStringLiteral("TimeoutException"), QStringLiteral("System") },
+        { QStringLiteral("OperationCanceledException"), QStringLiteral("System") },
+        { QStringLiteral("IOException"), QStringLiteral("System.IO") },
+        { QStringLiteral("KeyNotFoundException"), QStringLiteral("System.Collections.Generic") },
+        { QStringLiteral("HttpRequestException"), QStringLiteral("System.Net.Http") },
+        { QStringLiteral("CryptographicException"), QStringLiteral("System.Security.Cryptography") },
+        { QStringLiteral("InterruptedException"), QStringLiteral("GitCredentialManager") },
+        { QStringLiteral("GitException"), QStringLiteral("GitCredentialManager") },
+        { QStringLiteral("InteropException"), QStringLiteral("GitCredentialManager.Interop") },
+        { QStringLiteral("OAuth2Exception"), QStringLiteral("GitCredentialManager.Authentication.OAuth") },
+        { QStringLiteral("MsalException"), QStringLiteral("Microsoft.Identity.Client") },
+        { QStringLiteral("MsalClientException"), QStringLiteral("Microsoft.Identity.Client") },
+        { QStringLiteral("MsalServiceException"), QStringLiteral("Microsoft.Identity.Client") },
+        { QStringLiteral("MsalUiRequiredException"), QStringLiteral("Microsoft.Identity.Client") },
+        { QStringLiteral("MsalThrottledServiceException"), QStringLiteral("Microsoft.Identity.Client") },
+        { QStringLiteral("IntuneAppProtectionPolicyRequiredException"), QStringLiteral("Microsoft.Identity.Client") },
+    };
+    const QString name = QLatin1String(ex.typeName());
+    const QString ns = namespaces.value(name);
+    return ns.isEmpty() ? name : ns + QLatin1Char('.') + name;
+}
+
+} // namespace
+
+QString exceptionToString(const std::exception &ex)
+{
+    const auto *gcmEx = dynamic_cast<const Exception *>(&ex);
+    if (!gcmEx) {
+        return QString::fromUtf8(ex.what());
+    }
+    // Exception.ToString() without the stack trace (C++ has none)
+    QString text = dotnetTypeName(*gcmEx);
+    if (!gcmEx->message().isEmpty()) {
+        text += QStringLiteral(": ") + gcmEx->message();
+    }
+    if (const auto &inner = gcmEx->inner()) {
+        text += QStringLiteral(" ---> ") + exceptionToString(*inner) + QStringLiteral("\n   --- End of inner exception stack trace ---");
+    }
+    return text;
+}
+
+namespace {
+
 class DiagnosticReporter : public IDiagnosticReporter
 {
 public:
@@ -94,8 +148,7 @@ public:
     {
         OptString text;
         if (exception) {
-            const auto *gcmEx = dynamic_cast<const Exception *>(exception);
-            text = gcmEx ? QStringLiteral("%1: %2").arg(QLatin1String(gcmEx->typeName()), gcmEx->message()) : QString::fromUtf8(exception->what());
+            text = exceptionToString(*exception);
         }
         m_reports.append({DiagnosticReportKind::Error, message, text});
     }

@@ -2,6 +2,7 @@
 // Interop/Linux/SecretServiceCollectionTests, plus own tests of the store selection (CredentialStore).
 // The Secret Service read/write tests need a running provider and are skipped unless GCM_TEST_SECRETSERVICE=1
 // (upstream skips them unconditionally).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/constants.h"
 #include "core/stores.h"
 #include "infra/testcommandcontext.h"

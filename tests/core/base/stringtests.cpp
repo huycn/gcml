@@ -1,5 +1,6 @@
 // Ports of StringExtensionsTests, UriExtensionsTests, EnsureArgumentTests, GitConfigurationKeyComparerTests
 // plus tests for the helpers that only exist in this port.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/dictionary.h"
 #include "core/strings.h"
 #include "infra/testmain.h"

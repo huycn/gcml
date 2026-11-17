@@ -2,6 +2,7 @@
 // Interop/Posix/PosixFileSystemTests, plus tests for ChildProcess and the real file system of this port.
 // Not ported: Windows/macOS environment cases; WslUtilsTests (IsWslPath / ConvertToDistroPath / CreateWslProcess
 // serve GCM running on Windows and are not part of this port).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/git.h"
 #include "core/platform.h"
 #include "core/strings.h"
@@ -508,6 +509,7 @@ private Q_SLOTS:
         QCOMPARE(process->readAllStandardOutput(), QByteArray("hello\nworld\n"));
         QVERIFY(process->hasExited());
         QCOMPARE(process->exitCode(), 0);
+        QVERIFY(process->id() > 0); // still known after the exit (TRACE2 child_exit reports it)
     }
 
     void standardInput_isForwardedAndLinesAreRead()

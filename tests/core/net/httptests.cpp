@@ -2,6 +2,7 @@
 // own tests of the real QNetworkAccessManager handler against a local server.
 // Adapted: the factory tests inspect the handler options instead of a .NET WebProxy; the TLS-backend cases of
 // HttpClientFactory_GetClient_ChecksCertBundleOnlyIfEnabled that need Schannel are Windows-only and not ported.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/constants.h"
 #include "core/http.h"
 #include "core/strings.h"

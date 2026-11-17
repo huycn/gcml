@@ -1,6 +1,7 @@
 // Ports of StreamExtensionsTests, GitStreamReaderTests, GitCapabilitiesTests, GitStateValidationTests,
 // TraceTests, TraceUtilsTests.
 // Not ported: the CRLF TextWriter variants of StreamExtensionsTests (writers in this port always use LF).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/constants.h"
 #include "core/gitcapabilities.h"
 #include "core/streams.h"

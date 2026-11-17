@@ -309,4 +309,62 @@ bool HttpClientFactory::tryCreateProxy(HttpProxySettings &proxy)
     return true;
 }
 
+QString httpStatusCodeName(int statusCode)
+{
+    switch (statusCode) {
+        case 100: return QStringLiteral("Continue");
+        case 101: return QStringLiteral("SwitchingProtocols");
+        case 200: return QStringLiteral("OK");
+        case 201: return QStringLiteral("Created");
+        case 202: return QStringLiteral("Accepted");
+        case 203: return QStringLiteral("NonAuthoritativeInformation");
+        case 204: return QStringLiteral("NoContent");
+        case 205: return QStringLiteral("ResetContent");
+        case 206: return QStringLiteral("PartialContent");
+        case 300: return QStringLiteral("Ambiguous");
+        case 301: return QStringLiteral("Moved");
+        case 302: return QStringLiteral("Redirect");
+        case 303: return QStringLiteral("RedirectMethod");
+        case 304: return QStringLiteral("NotModified");
+        case 305: return QStringLiteral("UseProxy");
+        case 307: return QStringLiteral("TemporaryRedirect");
+        case 308: return QStringLiteral("PermanentRedirect");
+        case 400: return QStringLiteral("BadRequest");
+        case 401: return QStringLiteral("Unauthorized");
+        case 402: return QStringLiteral("PaymentRequired");
+        case 403: return QStringLiteral("Forbidden");
+        case 404: return QStringLiteral("NotFound");
+        case 405: return QStringLiteral("MethodNotAllowed");
+        case 406: return QStringLiteral("NotAcceptable");
+        case 407: return QStringLiteral("ProxyAuthenticationRequired");
+        case 408: return QStringLiteral("RequestTimeout");
+        case 409: return QStringLiteral("Conflict");
+        case 410: return QStringLiteral("Gone");
+        case 411: return QStringLiteral("LengthRequired");
+        case 412: return QStringLiteral("PreconditionFailed");
+        case 413: return QStringLiteral("RequestEntityTooLarge");
+        case 414: return QStringLiteral("RequestUriTooLong");
+        case 415: return QStringLiteral("UnsupportedMediaType");
+        case 416: return QStringLiteral("RequestedRangeNotSatisfiable");
+        case 417: return QStringLiteral("ExpectationFailed");
+        case 421: return QStringLiteral("MisdirectedRequest");
+        case 422: return QStringLiteral("UnprocessableEntity");
+        case 423: return QStringLiteral("Locked");
+        case 424: return QStringLiteral("FailedDependency");
+        case 426: return QStringLiteral("UpgradeRequired");
+        case 428: return QStringLiteral("PreconditionRequired");
+        case 429: return QStringLiteral("TooManyRequests");
+        case 431: return QStringLiteral("RequestHeaderFieldsTooLarge");
+        case 451: return QStringLiteral("UnavailableForLegalReasons");
+        case 500: return QStringLiteral("InternalServerError");
+        case 501: return QStringLiteral("NotImplemented");
+        case 502: return QStringLiteral("BadGateway");
+        case 503: return QStringLiteral("ServiceUnavailable");
+        case 504: return QStringLiteral("GatewayTimeout");
+        case 505: return QStringLiteral("HttpVersionNotSupported");
+        case 511: return QStringLiteral("NetworkAuthenticationRequired");
+        default: return QString::number(statusCode);
+    }
+}
+
 } // namespace gcm

@@ -31,3 +31,10 @@ gcm_test(test_github "${CMAKE_CURRENT_SOURCE_DIR}/github" gcmgithub)
 gcm_test(test_gitlab "${CMAKE_CURRENT_SOURCE_DIR}/gitlab" gcmgitlab)
 gcm_test(test_bitbucket "${CMAKE_CURRENT_SOURCE_DIR}/bitbucket" gcmbitbucket)
 gcm_test(test_azrepos "${CMAKE_CURRENT_SOURCE_DIR}/azrepos" gcmazrepos)
+gcm_test(test_ui "${CMAKE_CURRENT_SOURCE_DIR}/ui" gcmui)
+
+# The UI helper with a scripted user, for tests/e2e/ui-helper.sh (not a unit test).
+if(TARGET gcmui)
+  add_executable(git-credential-manager-ui-scripted "${CMAKE_CURRENT_SOURCE_DIR}/uiscripted/main.cpp")
+  target_link_libraries(git-credential-manager-ui-scripted PRIVATE gcmui)
+endif()

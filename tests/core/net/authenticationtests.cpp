@@ -1,5 +1,6 @@
 // Ports of AuthenticationBaseTests, BasicAuthenticationTests and WindowsIntegratedAuthenticationTests, plus own
 // tests of the UI-helper protocol and OAuthAuthentication (upstream has no tests for the latter).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/auth/authentication.h"
 #include "core/constants.h"
 #include "core/strings.h"

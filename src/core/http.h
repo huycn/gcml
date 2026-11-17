@@ -52,6 +52,10 @@ struct HttpRequest
     void setJsonContent(const QByteArray &json);
 };
 
+/// The name of the System.Net.HttpStatusCode enum value ("OK", "NotFound", "Unauthorized"), or the number for codes
+/// the enum has no name for -- what upstream prints with $"{response.StatusCode}".
+QString httpStatusCodeName(int statusCode);
+
 struct HttpResponse
 {
     int statusCode = 0;

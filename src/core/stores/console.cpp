@@ -2,6 +2,7 @@
 #include "core/console.h"
 
 #include "core/streams.h"
+#include "core/strings.h"
 #include "core/tty.h"
 
 #include <sys/ioctl.h>
@@ -10,47 +11,6 @@
 namespace gcm {
 
 namespace {
-
-/// Wraps like Spectre.Console renders text: words move to the next line when they don't fit, white space stays at
-/// the end of the line it follows, words longer than a line are split, explicit line breaks are kept.
-QString wrapText(const QString &text, int width)
-{
-    QStringList out;
-    for (const QStringList lines = text.split(QLatin1Char('\n')); const QString &line : lines) {
-        QString current;
-        qsizetype i = 0;
-        while (i < line.size()) {
-            const bool space = line[i].isSpace();
-            qsizetype j = i;
-            while (j < line.size() && line[j].isSpace() == space) {
-                ++j;
-            }
-            QString segment = line.mid(i, j - i);
-            i = j;
-            if (space) {
-                // Trailing white space that does not fit is dropped at the line break
-                if (current.size() + segment.size() <= width) {
-                    current += segment;
-                } else if (!current.isEmpty()) {
-                    out.append(current);
-                    current.clear();
-                }
-                continue;
-            }
-            if (!current.isEmpty() && current.size() + segment.size() > width) {
-                out.append(current);
-                current.clear();
-            }
-            while (segment.size() > width) {
-                out.append(segment.left(width));
-                segment = segment.mid(width);
-            }
-            current += segment;
-        }
-        out.append(current);
-    }
-    return out.join(QLatin1Char('\n'));
-}
 
 int terminalWidth()
 {

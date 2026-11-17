@@ -1,6 +1,7 @@
 // Ports of SettingsTests, Interop/Linux/LinuxSettingsTests and Interop/Linux/LinuxConfigParserTests.
 // Not ported: Settings_TlsBackend_ReturnsExpectedValue (TlsBackend / Schannel are Windows-only and not part of
 // ISettings here). Settings_UseMsAuthDefaultAccount_Unset expects null (IsDevBox is Windows-only).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/constants.h"
 #include "core/settings.h"
 #include "core/strings.h"

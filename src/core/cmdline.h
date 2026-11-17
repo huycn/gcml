@@ -32,6 +32,9 @@ struct Argument
     QString name;
     QString description;
     bool required = true;
+    /// The same System.CommandLine argument object is added to more than one command: its help usage then shows it
+    /// (and every argument after it) as optional, whatever its arity.
+    bool multiParented = false;
 };
 
 class Command;
@@ -82,6 +85,10 @@ public:
     void addArgument(const Argument &argument) { m_arguments.append(argument); }
     void addCommand(std::shared_ptr<Command> command) { m_commands.append(std::move(command)); }
     void setHandler(Handler handler) { m_handler = std::move(handler); }
+    /// Runs after a successful parse; a returned message is reported like a parse error (message, help, exit 1).
+    using Validator = std::function<OptString(const ParseResult &)>;
+    void addValidator(Validator validator) { m_validators.append(std::move(validator)); }
+    const QList<Validator> &validators() const { return m_validators; }
 
     const QList<Option> &options() const { return m_options; }
     const QList<Option> &globalOptions() const { return m_globalOptions; }
@@ -99,6 +106,7 @@ private:
     QList<Argument> m_arguments;
     QList<std::shared_ptr<Command>> m_commands;
     Handler m_handler;
+    QList<Validator> m_validators;
 };
 
 class CommandLineParser

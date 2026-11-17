@@ -1,4 +1,5 @@
 // Ports of HostProviderTests and HostProviderRegistryTests.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "appmocks.h"
 #include "core/constants.h"
 #include "core/strings.h"

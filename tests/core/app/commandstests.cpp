@@ -1,4 +1,5 @@
 // Ports of Commands/*Tests (GitCommandBase, Get, Store, Erase, Capability, Configure, Unconfigure, Diagnose).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "appmocks.h"
 #include "core/commands.h"
 #include "core/diagnostics.h"
@@ -512,7 +513,17 @@ private Q_SLOTS:
         const DiagnosticResult result = NetworkingDiagnostic(context).run();
         QCOMPARE(result.outcome, DiagnosticOutcome::Error);
         QCOMPARE(result.reports.last().message, Q("Unhandled exception: Simulated no network"));
-        QCOMPARE(result.exceptions(), QStringList{Q("HttpRequestException: Simulated no network")});
+        QCOMPARE(result.exceptions(), QStringList{Q("System.Net.Http.HttpRequestException: Simulated no network")});
+    }
+
+    void exceptionToString_likeDotnet()
+    {
+        QCOMPARE(exceptionToString(Exception(Q("plain"))), Q("System.Exception: plain"));
+        QCOMPARE(exceptionToString(IOException(Q("io"))), Q("System.IO.IOException: io"));
+        QCOMPARE(exceptionToString(InteropException(Q("native"), 5)), Q("GitCredentialManager.Interop.InteropException: native"));
+        QCOMPARE(exceptionToString(std::runtime_error("std")), Q("std"));
+        const InvalidOperationException outer(Q("outer"), std::make_shared<KeyNotFoundException>(Q("inner")));
+        QCOMPARE(exceptionToString(outer), Q("System.InvalidOperationException: outer ---> System.Collections.Generic.KeyNotFoundException: inner\n   --- End of inner exception stack trace ---"));
     }
 };
 

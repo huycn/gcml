@@ -1,5 +1,6 @@
 // Ports of Trace2Tests and Trace2MessageTests, plus an own end-to-end test of the three TRACE2 targets.
 // Not ported: TryGetPipeName_Windows (named pipes are Windows only).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/trace2.h"
 #include "core/trace2message.h"
 #include "core/platform.h"
@@ -277,6 +278,9 @@ private Q_SLOTS:
             // version, start and exit carry no depth upstream
             const bool noDepth = name == QLatin1String("version") || name == QLatin1String("start") || name == QLatin1String("exit");
             QCOMPARE(obj.value(Q("depth")).toInt(), noDepth ? 0 : 1);
+            if (name == QLatin1String("child_exit")) {
+                QVERIFY(obj.value(Q("pid")).toInt() > 0);
+            }
         }
         QCOMPARE(names, (QStringList{Q("version"), Q("start"), Q("cmd_name"), Q("region_enter"), Q("data"), Q("region_leave"),
                                      Q("child_start"), Q("child_exit"), Q("error"), Q("exit")}));

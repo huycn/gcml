@@ -1,11 +1,14 @@
-// Ports of ConsoleServiceTests, Tty/AnsiEscapeParserTests, Tty/AnsiConsoleFactoryTests and
-// Tty/RawModeExclusivityModeTests, plus own tests of the prompts with scripted input.
+// Ports of ConsoleServiceTests, Tty/AnsiEscapeParserTests, Tty/AnsiConsoleFactoryTests,
+// Tty/RawModeExclusivityModeTests and Interop/Posix/SelectTests, plus own tests of the prompts with scripted input.
 // Not ported: RunAsync / ReadKeyAsync cases (the port is synchronous).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/console.h"
 #include "core/streams.h"
 #include "core/tty.h"
 #include "infra/testcommandcontext.h"
 #include "infra/testmain.h"
+
+#include <unistd.h>
 
 using namespace gcm;
 using namespace gcm::test;
@@ -370,8 +373,57 @@ private Q_SLOTS:
     }
 };
 
+// =============================================================================================
+
+/// Port of Interop/Posix/SelectTests.cs ([PosixFact]): the readiness wait the Escape disambiguation and
+/// isKeyAvailable rely on.
+class SelectTests : public QObject
+{
+    Q_OBJECT
+
+    /// Both ends of a pipe, closed when the test ends.
+    struct Pipe
+    {
+        int fds[2] = {-1, -1};
+        Pipe() { QCOMPARE_EQ(::pipe(fds), 0); }
+        ~Pipe()
+        {
+            ::close(fds[0]);
+            ::close(fds[1]);
+        }
+        Pipe(const Pipe &) = delete;
+        Pipe &operator=(const Pipe &) = delete;
+    };
+
+private Q_SLOTS:
+    void waitReadable_noData_timesOutAndReturnsFalse()
+    {
+        // Read end has no data: select must honour the timeout and report not-readable. This is the exact behaviour
+        // the Escape-disambiguation path depends on.
+        Pipe pipe;
+        QVERIFY(!Select::waitReadable(pipe.fds[0], 50));
+    }
+
+    void waitReadable_dataAvailable_returnsTrue()
+    {
+        Pipe pipe;
+        const char esc = 0x1B;
+        QCOMPARE(::write(pipe.fds[1], &esc, 1), 1);
+        QVERIFY(Select::waitReadable(pipe.fds[0], 50));
+    }
+
+    void waitReadable_zeroTimeout_noData_returnsFalse()
+    {
+        // Zero-timeout poll (the isKeyAvailable path) must not block and must report not-readable when nothing is
+        // buffered.
+        Pipe pipe;
+        QVERIFY(!Select::waitReadable(pipe.fds[0], 0));
+    }
+};
+
 GCM_REGISTER_TEST(AnsiEscapeParserTests)
 GCM_REGISTER_TEST(AnsiConsoleFactoryTests)
 GCM_REGISTER_TEST(RawModeExclusivityModeTests)
 GCM_REGISTER_TEST(ConsoleServiceTests)
+GCM_REGISTER_TEST(SelectTests)
 #include "consoletests.moc"

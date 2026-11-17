@@ -1,6 +1,7 @@
 // Ports of GitRequestTests and GitResponseTests.
 // Not ported: null-argument cases (a GitRequest is built from a dictionary value, a Credential cannot be null) and
 // the null key/value cases of SetState (QString cannot be null); "same instance" checks compare values.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/gitrequest.h"
 #include "core/strings.h"
 #include "infra/testmain.h"
@@ -180,6 +181,17 @@ private Q_SLOTS:
         const GitRequest request(MultiDictionary{
             {Q("protocol"), {Q("https")}}, {Q("host"), {Q("example.com")}}, {Q("state"), {Q("gcm.token=abc=def=ghi")}}});
         QCOMPARE(request.state().value(Q("token")), Q("abc=def=ghi"));
+    }
+
+    // Own test: like UriBuilder, text after a '/' in the host argument goes in front of the path
+    void gitRequest_getRemoteUri_hostWithSlash()
+    {
+        const GitRequest request(MultiDictionary{{Q("protocol"), {Q("https")}}, {Q("host"), {Q("example.com:8443/")}}, {Q("path"), {Q("repo.git")}}});
+        const std::optional<QUrl> uri = request.getRemoteUri();
+        QVERIFY(uri.has_value());
+        QCOMPARE(uri->host(), Q("example.com"));
+        QCOMPARE(uri->port(), 8443);
+        QCOMPARE(uri->path(), Q("//repo.git"));
     }
 };
 

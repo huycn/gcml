@@ -1,5 +1,6 @@
 // Port of ApplicationTests, plus own tests of the command line (core/cmdline.h) and of Application::run.
 // Not ported: the AggregateException cases of ContainsInterrupt (there is no aggregate exception type here).
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "appmocks.h"
 #include "core/application.h"
 #include "core/cmdline.h"
@@ -339,7 +340,45 @@ private Q_SLOTS:
                                      "  --multi <multi>        Many\n"
                                      "  --global-flag          A global flag\n"
                                      "  -?, -h, --help         Show help and usage information\n"
-                                     "\n\n"));
+                                     // System.CommandLine ends the help of a command with arguments with one more
+                                     // blank line (seen in `github logout --help`)
+                                     "\n\n\n"));
+    }
+
+    void help_aliasesSortedByPrefixThenName()
+    {
+        Fixture f;
+        auto login = std::make_shared<Command>(Q("login"), Q("Log in"));
+        login->addOption(Option{{Q("--web"), Q("--browser")}, Q("Browser")});
+        login->addOption(Option{{Q("--token"), Q("--pat"), Q("-t")}, Q("Token"), true});
+        login->setHandler([](const ParseResult &) { return 0; });
+        f.root->addCommand(login);
+        QCOMPARE(f.invoke({Q("login"), Q("--help")}), 0);
+        QVERIFY2(f.out.toString().contains(Q("  --browser, --web            Browser\n")), qPrintable(f.out.toString()));
+        QVERIFY2(f.out.toString().contains(Q("  -t, --pat, --token <token>  Token\n")), qPrintable(f.out.toString()));
+    }
+
+    void validator_ReportedAsParseError()
+    {
+        Fixture f;
+        bool ran = false;
+        auto cmd = std::make_shared<Command>(Q("pick"), Q("Pick one"));
+        cmd->addOption(Option::flag(Q("--a"), Q("A")));
+        cmd->addOption(Option::flag(Q("--b"), Q("B")));
+        cmd->addValidator([](const ParseResult &r) -> OptString {
+            return r.has(Q("--a")) && r.has(Q("--b")) ? OptString(Q("Can only specify one of: --a, --b")) : std::nullopt;
+        });
+        cmd->setHandler([&](const ParseResult &) {
+            ran = true;
+            return 0;
+        });
+        f.root->addCommand(cmd);
+        QCOMPARE(f.invoke({Q("pick"), Q("--a"), Q("--b")}), 1);
+        QVERIFY(!ran);
+        QCOMPARE(f.err.toString(), Q("Can only specify one of: --a, --b\n\n"));
+        QVERIFY(f.out.toString().startsWith(Q("Description:\n  Pick one\n")));
+        QCOMPARE(f.invoke({Q("pick"), Q("--a")}), 0);
+        QVERIFY(ran);
     }
 
     void exceptionHandler_mapsExceptions()

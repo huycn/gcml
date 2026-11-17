@@ -26,6 +26,10 @@ QString trimUntilIndexOf(const QString &s, const QString &value, Qt::CaseSensiti
 QString trimUntilLastIndexOf(const QString &s, QChar c);
 QString trimUntilLastIndexOf(const QString &s, const QString &value, Qt::CaseSensitivity cs = Qt::CaseSensitive);
 QString trimMiddle(const QString &s, const QString &value, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+/// Wraps `text` to `width` columns the way Spectre.Console renders plain text: words move to the next line when they
+/// don't fit, white space stays at the end of the line it follows, words longer than a line are split, explicit line
+/// breaks are kept.
+QString wrapText(const QString &text, int width);
 QString toSnakeCase(const QString &s);
 
 // --- ConvertUtils -------------------------------------------------------------------------
@@ -53,6 +57,19 @@ QUrl withoutUserInfo(const QUrl &uri);
 /// (see comment in Settings::getSettingValues).
 QStringList getGitConfigurationScopes(const QUrl &uri);
 
+// --- [Flags] enums ------------------------------------------------------------------------
+/// A named value of a .NET [Flags] enum, listed in declaration order.
+struct EnumName
+{
+    int value;
+    const char *name;
+};
+/// Enum.ToString of a flags value: "None", "Basic, Pat", "Pat, OAuth" (largest named values that fit, printed in
+/// ascending order); the number when the bits cannot be expressed with the names.
+QString formatFlagsEnum(int value, const QList<EnumName> &names);
+/// Enum.TryParse(value, ignoreCase: true): comma-separated names or numbers, OR-ed together.
+bool tryParseFlagsEnum(const QString &value, const QList<EnumName> &names, int &result);
+
 // --- misc ---------------------------------------------------------------------------------
 /// AuthenticationBase.QuoteCmdArg
 QString quoteCmdArg(const QString &s);
@@ -66,5 +83,7 @@ QByteArray base64UrlDecode(const QString &s);
 /// (middle, possibly containing dots) is case-sensitive. Returns the normalised key usable as a hash key.
 QString normalizeGitConfigKey(const QString &key);
 bool gitConfigKeyEquals(const QString &a, const QString &b);
+/// GitConfigurationKeyComparer.TrySplit: "section[.scope].property" into its parts (the scope may contain dots).
+bool trySplitGitConfigKey(const QString &key, QString &section, OptString &scope, QString &property);
 
 } // namespace gcm

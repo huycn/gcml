@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 namespace gcm {
@@ -338,8 +339,11 @@ struct DiagnoseCommand::Private
     QString style(const QString &text, const char *ansi) const {
         return useColor ? QStringLiteral("\x1b[%1m%2\x1b[0m").arg(QLatin1String(ansi), text) : text;
     }
+    /// Spectre.Console wraps to the console width: the terminal's, or 80 columns when stdout is redirected. Only plain
+    /// lines are wrapped; styled ones are short status lines.
+    int width = 80;
     void line(const QString &text = QString()) {
-        out->writeLine(text);
+        out->writeLine(text.contains(QLatin1Char('\x1b')) ? text : wrapText(text, width));
     }
 };
 
@@ -360,6 +364,9 @@ DiagnoseCommand::DiagnoseCommand(ICommandContext &context)
     d->ownedOut = std::make_unique<OwningWriter>(std::move(file));
     d->out = d->ownedOut.get();
     d->useColor = ::isatty(STDOUT_FILENO);
+    if (winsize ws{}; d->useColor && ::ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 0) {
+        d->width = ws.ws_col;
+    }
 
     addOption(Option{{QStringLiteral("--output"), QStringLiteral("-o")}, QStringLiteral("Output directory for diagnostic logs."), true});
     addOption(Option::flag(QStringLiteral("--strict"), QStringLiteral("Exit with a non-zero code if diagnostic warnings are present.")));
@@ -436,6 +443,7 @@ int DiagnoseCommand::execute(const OptString &output, bool strict)
     if (!logFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         throw IOException(QStringLiteral("Could not open '%1' for writing: %2").arg(logFilePath, logFile.errorString()));
     }
+    logFile.write("\xEF\xBB\xBF"); // StreamWriter with Encoding.UTF8 starts the file with a BOM
     DeviceTextWriter fullLog(&logFile);
 
     // Header

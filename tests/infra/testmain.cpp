@@ -20,7 +20,17 @@ QList<Entry> &registry()
     static QList<Entry> entries;
     return entries;
 }
+TestApplicationFactory::Factory &applicationFactory()
+{
+    static TestApplicationFactory::Factory factory;
+    return factory;
+}
 } // namespace
+
+TestApplicationFactory::TestApplicationFactory(Factory factory)
+{
+    applicationFactory() = std::move(factory);
+}
 
 TestRegistration::TestRegistration(const char *name, std::function<QObject *()> factory)
 {
@@ -33,7 +43,9 @@ int main(int argc, char **argv)
 {
     using namespace gcm::test;
     qputenv("QT_QPA_PLATFORM", "offscreen");
-    QCoreApplication app(argc, argv);
+    std::unique_ptr<QCoreApplication> appHolder =
+        applicationFactory() ? applicationFactory()(argc, argv) : std::make_unique<QCoreApplication>(argc, argv);
+    QCoreApplication &app = *appHolder;
 
     QStringList classes;
     QStringList qtArgs{app.arguments().constFirst()};

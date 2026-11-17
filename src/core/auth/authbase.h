@@ -7,6 +7,7 @@
 // the dialog it additionally writes `cancelled=1`, which invokeHelper turns into OperationCanceledException.
 #pragma once
 
+#include "core/auth/oauth2.h"
 #include "core/commandcontext.h"
 
 namespace gcm {
@@ -38,6 +39,11 @@ protected:
     /// else `defaultValue`. A rooted path must exist; a bare name is looked up in the installation directory and
     /// then on PATH. Missing helpers produce a warning and return false.
     bool tryFindHelperCommand(const QString &envar, const QString &configName, const QString &defaultValue, QString &command, QString &args);
+
+    /// Shows the device code dialog (helper `command` with `promptArgs`) while polling the token endpoint; the
+    /// dialog is closed once the token arrived. Closing the dialog cancels: InvalidOperationException
+    /// ("User canceled device code authentication").
+    OAuth2TokenResult getTokenByDeviceCodeWithDialog(const QString &command, const QString &promptArgs, IOAuth2Client &client, const OAuth2DeviceCodeResult &dcr);
 
     ICommandContext &m_context;
 };

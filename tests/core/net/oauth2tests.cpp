@@ -1,5 +1,6 @@
 // Ports of OAuth2ClientTests, OAuth2CryptographicCodeGeneratorTests, OAuth2ResponseModeTests,
 // OAuth2SystemWebBrowserTests and TokenEndpointResponseJsonTest, plus own tests of the loopback listener.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/auth/oauth2.h"
 #include "core/strings.h"
 #include "infra/testmain.h"

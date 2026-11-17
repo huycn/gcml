@@ -133,8 +133,12 @@ std::optional<QUrl> GitRequest::getRemoteUri(bool includeUser) const
         return std::nullopt;
     }
 
-    // UriBuilder(protocol, host[:port]) [+ user name] [+ path?query#fragment]
-    const QStringList hostParts = host->split(QLatin1Char(':'));
+    // UriBuilder(protocol, host[:port]) [+ user name] [+ path?query#fragment]. UriBuilder.ToString concatenates the
+    // host and the path, so anything after a '/' in the host argument ends up in front of the path.
+    const qsizetype slash = host->indexOf(QLatin1Char('/'));
+    const QString hostAndPort = slash < 0 ? *host : host->left(slash);
+    const QString hostPathPrefix = slash < 0 ? QString() : host->mid(slash);
+    const QStringList hostParts = hostAndPort.split(QLatin1Char(':'));
     QUrl uri;
     uri.setScheme(*protocol);
     uri.setHost(hostParts[0]);
@@ -164,7 +168,7 @@ std::optional<QUrl> GitRequest::getRemoteUri(bool includeUser) const
             uri.setFragment(pathParts[1], QUrl::TolerantMode);
         }
     }
-    uri.setPath(path, QUrl::TolerantMode);
+    uri.setPath(hostPathPrefix + path, QUrl::TolerantMode);
 
     if (!uri.isValid() || uri.scheme().isEmpty()) {
         throw Exception(QStringLiteral("Invalid URI: The URI scheme or host is not valid."));

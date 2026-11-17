@@ -1,6 +1,7 @@
 // Ports of GenericHostProviderTests and GenericOAuthConfigTests.
 // Not ported: the [WindowsFact] cases (WIA and NTLM are only detected on Windows); the [PosixFact]
 // NonWindows_WiaSupported case is ported.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "appmocks.h"
 #include "core/constants.h"
 #include "core/generic.h"

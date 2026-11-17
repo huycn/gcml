@@ -5,6 +5,18 @@
 #include "core/commandcontext.h"
 #include "core/generic.h"
 #include "core/trace2.h"
+#ifdef GCM_HAVE_AZREPOS
+#include "azrepos/azrepos.h"
+#endif
+#ifdef GCM_HAVE_BITBUCKET
+#include "bitbucket/bitbucket.h"
+#endif
+#ifdef GCM_HAVE_GITHUB
+#include "github/github.h"
+#endif
+#ifdef GCM_HAVE_GITLAB
+#include "gitlab/gitlab.h"
+#endif
 
 #include <QCoreApplication>
 
@@ -31,8 +43,19 @@ int main(int argc, char **argv)
         {
             Trace2::Scope region = Trace2::startRegion(QStringLiteral("main"), QStringLiteral("provider_reg"));
             // All supported host providers at normal priority; the generic provider should never win against a more
-            // specific one, so it is registered with low priority. (Azure Repos, Bitbucket, GitHub and GitLab are
-            // added here as their packages are ported.)
+            // specific one, so it is registered with low priority.
+#ifdef GCM_HAVE_AZREPOS
+            application.registerProvider(std::make_shared<azrepos::AzureReposHostProvider>(context), HostProviderPriority::Normal);
+#endif
+#ifdef GCM_HAVE_BITBUCKET
+            application.registerProvider(std::make_shared<bitbucket::BitbucketHostProvider>(context), HostProviderPriority::Normal);
+#endif
+#ifdef GCM_HAVE_GITHUB
+            application.registerProvider(std::make_shared<github::GitHubHostProvider>(context), HostProviderPriority::Normal);
+#endif
+#ifdef GCM_HAVE_GITLAB
+            application.registerProvider(std::make_shared<gitlab::GitLabHostProvider>(context), HostProviderPriority::Normal);
+#endif
             application.registerProvider(std::make_shared<GenericHostProvider>(context), HostProviderPriority::Low);
         }
         exitCode = application.run(args);

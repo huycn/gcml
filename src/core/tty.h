@@ -51,6 +51,12 @@ namespace AnsiEscapeParser {
     std::optional<KeyInfo> readKey(const std::function<int()> &readByte, const std::function<int()> &readByteWithTimeout);
 } // namespace AnsiEscapeParser
 
+namespace Select {
+    /// Port of Interop/Posix/Native/Select.WaitReadable: waits until `fd` is readable or `timeoutMs` elapses (0 polls
+    /// without blocking). False on timeout or error.
+    bool waitReadable(int fd, int timeoutMs);
+} // namespace Select
+
 /// Keyboard input of a terminal.
 class ITerminalInput
 {

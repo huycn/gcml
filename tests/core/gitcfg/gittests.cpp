@@ -1,6 +1,7 @@
 // Ports of GitVersionTests, GitTests, GitConfigurationTests and ConfigurationServiceTests.
 // Tests that run `git` use an isolated global configuration (IsolatedGitConfig) instead of the user's real one;
 // upstream modifies (and then restores) the real global configuration.
+// clazy:excludeall=non-pod-global-static (test registrations and test data are global objects by design)
 #include "core/git.h"
 #include "core/constants.h"
 #include "infra/nulltrace.h"

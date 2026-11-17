@@ -156,6 +156,7 @@ protected:
     int m_trace2Id = 0;
     qint64 m_startTime = 0;
     bool m_exitTraced = false;
+    qint64 m_pid = 0; // kept after exit, when QProcess::processId() is 0 again (Process.Id keeps it)
     void traceExit();
 };
 

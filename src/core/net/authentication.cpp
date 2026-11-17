@@ -125,8 +125,7 @@ bool AuthenticationBase::tryFindUiHelper(QString &command, QString &args)
                                 Constants::DefaultUiHelper, command, args);
 }
 
-bool AuthenticationBase::tryFindHelperCommand(const QString &envar, const QString &configName,
-                                              const QString &defaultValue, QString &command, QString &args)
+bool AuthenticationBase::tryFindHelperCommand(const QString &envar, const QString &configName, const QString &defaultValue, QString &command, QString &args)
 {
     command.clear();
     args.clear();
@@ -189,6 +188,35 @@ bool AuthenticationBase::tryFindHelperCommand(const QString &envar, const QStrin
         m_context.console().writeWarning(QStringLiteral("could not find UI helper '%1'").arg(helperName));
     }
     return false;
+}
+
+OAuth2TokenResult AuthenticationBase::getTokenByDeviceCodeWithDialog(const QString &command, const QString &promptArgs, IOAuth2Client &client, const OAuth2DeviceCodeResult &dcr)
+{
+    m_context.trace().writeLine(QStringLiteral("Starting helper process: %1 %2").arg(command, promptArgs));
+    m_context.trace().flush();
+    std::unique_ptr<ChildProcess> helper =
+        m_context.processManager().createProcess(helperStartInfo(command, promptArgs), Trace2ProcessClass::UiHelper);
+    if (!helper->start()) {
+        throw Exception(QStringLiteral("Failed to start helper process: %1 %2").arg(command, promptArgs));
+    }
+    helper->closeStandardInput();
+
+    // If the dialog is closed the user wishes to cancel the request
+    CancellationToken tokenCt;
+    if (QProcess *p = helper->process()) {
+        QObject::connect(p, &QProcess::finished, p, [tokenCt] { tokenCt.cancel(); });
+    }
+
+    OAuth2TokenResult tokenResult;
+    try {
+        tokenResult = client.getTokenByDeviceCode(dcr, tokenCt);
+    } catch (const OperationCanceledException &) {
+        throw Exception(QStringLiteral("User canceled device code authentication"));
+    }
+
+    // Close the dialog
+    helper->kill();
+    return tokenResult;
 }
 
 // =============================================================================================
@@ -332,31 +360,7 @@ OAuth2TokenResult OAuthAuthentication::getTokenByDeviceCode(IOAuth2Client &clien
         promptArgs += QStringLiteral(" --code %1 ").arg(quoteCmdArg(dcr.userCode));
         promptArgs += QStringLiteral(" --url %1").arg(quoteCmdArg(absoluteUri(dcr.verificationUri)));
 
-        m_context.trace().writeLine(QStringLiteral("Starting helper process: %1 %2").arg(command, promptArgs));
-        m_context.trace().flush();
-        std::unique_ptr<ChildProcess> helper =
-            m_context.processManager().createProcess(helperStartInfo(command, promptArgs), Trace2ProcessClass::UiHelper);
-        if (!helper->start()) {
-            throw Exception(QStringLiteral("Failed to start helper process: %1 %2").arg(command, promptArgs));
-        }
-        helper->closeStandardInput();
-
-        // If the dialog is closed the user wishes to cancel the request
-        CancellationToken tokenCt;
-        if (QProcess *p = helper->process()) {
-            QObject::connect(p, &QProcess::finished, p, [tokenCt] { tokenCt.cancel(); });
-        }
-
-        OAuth2TokenResult tokenResult;
-        try {
-            tokenResult = client.getTokenByDeviceCode(dcr, tokenCt);
-        } catch (const OperationCanceledException &) {
-            throw Exception(QStringLiteral("User canceled device code authentication"));
-        }
-
-        // Close the dialog
-        helper->kill();
-        return tokenResult;
+        return getTokenByDeviceCodeWithDialog(command, promptArgs, client, dcr);
     }
 
     throwIfTerminalPromptsDisabled();

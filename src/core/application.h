@@ -24,11 +24,15 @@ enum class DiagnosticOutcome {
 /// The enum names as .NET prints them ("Success", "Warning", ...).
 QString diagnosticOutcomeName(DiagnosticOutcome outcome);
 
+/// An exception as .NET's Exception.ToString() prints it, without the stack trace: the type name with its .NET
+/// namespace ("System.IO.IOException"), ": message", and " ---> <inner>" followed by the end-of-inner-exception line.
+QString exceptionToString(const std::exception &ex);
+
 struct DiagnosticReport
 {
     DiagnosticReportKind kind;
     QString message;
-    /// "TypeName: message" of the exception that caused an Error report, if any.
+    /// The exception that caused an Error report, if any, as exceptionToString() renders it.
     OptString exceptionText;
 };
 

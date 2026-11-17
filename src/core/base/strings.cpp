@@ -107,6 +107,45 @@ QString trimMiddle(const QString &s, const QString &value, Qt::CaseSensitivity c
     return i > -1 ? s.left(i) + s.mid(i + value.size()) : s;
 }
 
+QString wrapText(const QString &text, int width)
+{
+    QStringList out;
+    for (const QStringList lines = text.split(QLatin1Char('\n')); const QString &line : lines) {
+        QString current;
+        qsizetype i = 0;
+        while (i < line.size()) {
+            const bool space = line[i].isSpace();
+            qsizetype j = i;
+            while (j < line.size() && line[j].isSpace() == space) {
+                ++j;
+            }
+            QString segment = line.mid(i, j - i);
+            i = j;
+            if (space) {
+                // Trailing white space that does not fit is dropped at the line break
+                if (current.size() + segment.size() <= width) {
+                    current += segment;
+                } else if (!current.isEmpty()) {
+                    out.append(current);
+                    current.clear();
+                }
+                continue;
+            }
+            if (!current.isEmpty() && current.size() + segment.size() > width) {
+                out.append(current);
+                current.clear();
+            }
+            while (segment.size() > width) {
+                out.append(segment.left(width));
+                segment = segment.mid(width);
+            }
+            current += segment;
+        }
+        out.append(current);
+    }
+    return out.join(QLatin1Char('\n'));
+}
+
 QString toSnakeCase(const QString &s)
 {
     const qsizetype len = s.size();
@@ -386,6 +425,24 @@ QByteArray base64UrlDecode(const QString &s)
     return QByteArray::fromBase64(s.toLatin1(), QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
 }
 
+bool trySplitGitConfigKey(const QString &key, QString &section, OptString &scope, QString &property)
+{
+    section.clear();
+    scope.reset();
+    property.clear();
+    const qsizetype first = key.indexOf(QLatin1Char('.'));
+    const qsizetype last = key.lastIndexOf(QLatin1Char('.'));
+    if (first < 0) {
+        return false;
+    }
+    section = key.left(first);
+    property = key.mid(last + 1);
+    if (first != last) {
+        scope = key.mid(first + 1, last - first - 1);
+    }
+    return true;
+}
+
 QString normalizeGitConfigKey(const QString &key)
 {
     // Blank keys cannot be split into section/property and all compare equal upstream.
@@ -406,6 +463,62 @@ QString normalizeGitConfigKey(const QString &key)
 bool gitConfigKeyEquals(const QString &a, const QString &b)
 {
     return normalizeGitConfigKey(a) == normalizeGitConfigKey(b);
+}
+
+// =============================================================================================
+// [Flags] enums
+// =============================================================================================
+
+QString formatFlagsEnum(int value, const QList<EnumName> &names)
+{
+    if (value == 0) {
+        for (const EnumName &n : names) {
+            if (n.value == 0) {
+                return QString::fromLatin1(n.name);
+            }
+        }
+        return QStringLiteral("0");
+    }
+    // .NET flags formatting: take the largest named values that fit, print them in ascending order
+    QList<EnumName> sorted = names;
+    std::stable_sort(sorted.begin(), sorted.end(), [](const EnumName &a, const EnumName &b) { return a.value > b.value; });
+    int remaining = value;
+    QStringList parts;
+    for (const EnumName &n : std::as_const(sorted)) {
+        if (n.value != 0 && (remaining & n.value) == n.value) {
+            parts.prepend(QString::fromLatin1(n.name));
+            remaining &= ~n.value;
+        }
+    }
+    return remaining != 0 ? QString::number(value) : parts.join(QStringLiteral(", "));
+}
+
+bool tryParseFlagsEnum(const QString &value, const QList<EnumName> &names, int &result)
+{
+    result = 0;
+    if (isNullOrWhiteSpace(value)) {
+        return false;
+    }
+    int parsed = 0;
+    const QStringList parts = value.split(QLatin1Char(','));
+    for (const QString &rawPart : parts) {
+        const QString part = rawPart.trimmed();
+        bool ok = false;
+        const int number = part.toInt(&ok);
+        if (ok) {
+            parsed |= number;
+            continue;
+        }
+        const auto it = std::find_if(names.begin(), names.end(), [&](const EnumName &n) {
+            return part.compare(QLatin1String(n.name), Qt::CaseInsensitive) == 0;
+        });
+        if (it == names.end()) {
+            return false;
+        }
+        parsed |= it->value;
+    }
+    result = parsed;
+    return true;
 }
 
 } // namespace gcm

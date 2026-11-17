@@ -221,6 +221,18 @@ void RawModeExclusivityMode::run(const std::function<void()> &func)
 // Inputs and outputs
 // =============================================================================================
 
+bool Select::waitReadable(int fd, int timeoutMs)
+{
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(fd, &set);
+    timeval tv{timeoutMs / 1000, (timeoutMs % 1000) * 1000};
+    if (::select(fd + 1, &set, nullptr, nullptr, &tv) <= 0) {
+        return false;
+    }
+    return FD_ISSET(fd, &set);
+}
+
 namespace {
 
 std::unique_ptr<void, void (*)(void *)> noSession()
@@ -391,12 +403,8 @@ private:
         }
     }
 
-    bool waitReadable(int timeoutMs) {
-        fd_set set;
-        FD_ZERO(&set);
-        FD_SET(m_fd, &set);
-        timeval tv{timeoutMs / 1000, (timeoutMs % 1000) * 1000};
-        return ::select(m_fd + 1, &set, nullptr, nullptr, &tv) > 0;
+    bool waitReadable(int timeoutMs) const {
+        return Select::waitReadable(m_fd, timeoutMs);
     }
 
     int readOneBlocking() {
