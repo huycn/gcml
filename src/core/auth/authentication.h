@@ -20,7 +20,7 @@ public:
 class BasicAuthentication : public AuthenticationBase, public IBasicAuthentication
 {
 public:
-    static inline const QStringList AuthorityIds = {QStringLiteral("basic")};
+    static const QStringList AuthorityIds;
 
     explicit BasicAuthentication(ICommandContext &context) : AuthenticationBase(context) {}
 
@@ -117,14 +117,7 @@ public:
 class WindowsIntegratedAuthentication : public AuthenticationBase, public IWindowsIntegratedAuthentication
 {
 public:
-    static inline const QStringList AuthorityIds = {
-        QStringLiteral("integrated"),
-        QStringLiteral("windows"),
-        QStringLiteral("kerberos"),
-        QStringLiteral("ntlm"),
-        QStringLiteral("tfs"),
-        QStringLiteral("sso"),
-    };
+    static const QStringList AuthorityIds;
 
     explicit WindowsIntegratedAuthentication(ICommandContext &context) : AuthenticationBase(context) {}
 

@@ -12,10 +12,10 @@ class GenericOAuthConfig
 public:
     struct WellKnown
     {
-        static inline const QString GiteaClientId = QStringLiteral("e90ee53c-94e2-48ac-9358-a874fb9e0662");
-        static inline const QString GiteaAuthzEndpoint = QStringLiteral("login/oauth/authorize");
-        static inline const QString GiteaTokenEndpoint = QStringLiteral("login/oauth/access_token");
-        static inline const QUrl LocalIPv4RedirectUri = QUrl(QStringLiteral("http://127.0.0.1"));
+        static const QString GiteaClientId;
+        static const QString GiteaAuthzEndpoint;
+        static const QString GiteaTokenEndpoint;
+        static const QUrl LocalIPv4RedirectUri;
     };
 
     /// False (and a trace line) when the authorize or token endpoint is missing or invalid.

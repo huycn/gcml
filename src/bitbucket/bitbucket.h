@@ -6,6 +6,13 @@
 #include "core/auth/authentication.h"
 #include "core/hostprovider.h"
 
+#undef GCM_STR // see core/constants.h
+#ifdef GCM_DEFINE_STRINGS_BITBUCKET
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
+
 namespace gcm::bitbucket {
 
 // =============================================================================================
@@ -308,7 +315,7 @@ public:
 class BitbucketAuthentication : public AuthenticationBase, public IBitbucketAuthentication
 {
 public:
-    static inline const QStringList AuthorityIds = {BitbucketConstants::Id};
+    static const QStringList AuthorityIds;
 
     explicit BitbucketAuthentication(ICommandContext &context);
     BitbucketAuthentication(ICommandContext &context, std::shared_ptr<IRegistry<bitbucket::BitbucketOAuth2Client>> oauth2ClientRegistry);

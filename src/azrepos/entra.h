@@ -19,6 +19,13 @@
 
 #include <QDateTime>
 
+#undef GCM_STR // see core/constants.h
+#ifdef GCM_DEFINE_STRINGS_ENTRA
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
+
 namespace gcm::entra {
 
 // =============================================================================================
@@ -213,7 +220,7 @@ QString scenarioName(WorkloadFederationScenario scenario);
 class WorkloadFederationOptions
 {
 public:
-    static inline const QString DefaultAudience = Constants::DefaultWorkloadFederationAudience;
+    static const QString DefaultAudience; // Constants::DefaultWorkloadFederationAudience
 
     WorkloadFederationScenario scenario = WorkloadFederationScenario::Generic;
     QString tenantId;
@@ -325,14 +332,10 @@ public:
 class EntraAuthentication : public AuthenticationBase, public IEntraAuthentication
 {
 public:
-    static inline const QStringList AuthorityIds = {
-        QStringLiteral("msa"),  QStringLiteral("microsoft"),   QStringLiteral("microsoftaccount"),
-        QStringLiteral("aad"),  QStringLiteral("azure"),       QStringLiteral("azuredirectory"),
-        QStringLiteral("live"), QStringLiteral("liveconnect"), QStringLiteral("liveid"),
-    };
+    static const QStringList AuthorityIds;
 
     /// The cloud instance of the default authority.
-    static inline const QString DefaultAuthority = QStringLiteral("https://login.microsoftonline.com/common");
+    static const QString DefaultAuthority; // "https://login.microsoftonline.com/common"
 
     explicit EntraAuthentication(ICommandContext &context, std::optional<PublicClientConfig> publicClientConfig = std::nullopt,
                                  TokenCacheStorageFactory cacheStorageFactory = nullptr);

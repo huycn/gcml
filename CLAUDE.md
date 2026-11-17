@@ -18,6 +18,7 @@ ctest --test-dir build                             # 10 test executables
 build/tests/test_core_app --class DiagnoseCommandTests [testFunction]   # one class / function
 ```
 
+- Release / MinSizeRel builds use link-time optimisation and are stripped; debug with the default RelWithDebInfo build.
 - Options: `-DGCM_PROVIDERS="github;gitlab;bitbucket;azrepos"` (subset allowed), `-DGCM_BUILD_UI=OFF`,
   `-DGCM_BUILD_TESTS=OFF`.
 - End to end (after a build): `tests/e2e/compare-with-upstream.sh build/src/app/git-credential-manager
@@ -35,6 +36,8 @@ build/tests/test_core_app --class DiagnoseCommandTests [testFunction]   # one cl
 - Behaviour that differs from upstream on purpose is listed in `docs/DESIGN.md`; do not "fix" it back.
 - Synchronous code: upstream's `Task<T> FooAsync()` is `T foo()`; no threads.
 - Message statements (`QStringLiteral(...).arg(...)`) stay on one line when below 250 characters.
+- String constants: `GCM_STR` in headers, defined once per header (`docs/DESIGN.md` 2.5); no `inline const QString` in
+  headers, and no global object initialised from another file's constant.
 - Test files: one Qt Test class per upstream test class, functions named after the upstream method (class prefix and
   `Async` dropped, lower camel case), registered with `GCM_REGISTER_TEST`; every test file carries
   `// clazy:excludeall=non-pod-global-static`. Tests never touch the network, a real keyring or the user's Git config

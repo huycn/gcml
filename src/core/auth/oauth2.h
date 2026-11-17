@@ -6,6 +6,13 @@
 #include "core/http.h"
 #include "core/platform.h"
 
+#undef GCM_STR // see core/constants.h
+#ifdef GCM_DEFINE_STRINGS_OAUTH2
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
+
 namespace gcm {
 
 namespace OAuth2Constants {

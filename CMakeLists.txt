@@ -46,6 +46,23 @@ if(GIT_EXECUTABLE)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+
+# Release and MinSizeRel builds: link-time optimisation, unused functions and data removed, binaries stripped. Debug and
+# RelWithDebInfo keep everything for debugging. Set CMAKE_INTERPROCEDURAL_OPTIMIZATION_<CONFIG>=OFF to build without
+# link-time optimisation.
+set(gcm_small_configs "$<CONFIG:Release,MinSizeRel>")
+include(CheckIPOSupported)
+check_ipo_supported(RESULT gcm_ipo_supported OUTPUT gcm_ipo_output LANGUAGES CXX)
+foreach(config RELEASE MINSIZEREL)
+  if(NOT DEFINED CMAKE_INTERPROCEDURAL_OPTIMIZATION_${config})
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_${config} ${gcm_ipo_supported})
+  endif()
+endforeach()
+if(NOT gcm_ipo_supported)
+  message(STATUS "Link-time optimisation not supported by this toolchain: ${gcm_ipo_output}")
+endif()
+add_compile_options("$<${gcm_small_configs}:-ffunction-sections;-fdata-sections>")
+add_link_options("$<${gcm_small_configs}:-Wl,--gc-sections;-s>")
 add_compile_definitions(QT_NO_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII QT_NO_FOREACH QT_NO_KEYWORDS
                         GCM_VERSION_STRING="${PROJECT_VERSION}"
                         GCM_VERSION_INFORMATIONAL="${GCM_VERSION_INFORMATIONAL}")

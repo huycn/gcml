@@ -52,7 +52,7 @@ private:
 class GpgPassCredentialStore : public PlaintextCredentialStore
 {
 public:
-    static inline const QString PasswordStoreDirEnvar = QStringLiteral("PASSWORD_STORE_DIR");
+    static const QString PasswordStoreDirEnvar; // "PASSWORD_STORE_DIR"
 
     GpgPassCredentialStore(IFileSystem &fileSystem, IGpg &gpg, QString storeRoot, OptString ns = std::nullopt);
 

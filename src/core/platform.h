@@ -226,7 +226,7 @@ QString getNativeEntryPath();
 } // namespace PlatformUtils
 
 namespace WslUtils {
-inline const QString WslViewShellHandlerName = QStringLiteral("wslview");
+extern const QString WslViewShellHandlerName; // "wslview"
 /// Detects whether we run inside a WSL distribution; `wslVersion` is 1 or 2.
 bool isWslDistribution(const IEnvironment &env, const IFileSystem &fs, int &wslVersion);
 /// Session id of the Windows host session, or -1 when it cannot be determined.

@@ -9,6 +9,13 @@
 #include "core/git.h"
 #include "core/hostprovider.h"
 
+#undef GCM_STR // see core/constants.h
+#ifdef GCM_DEFINE_STRINGS_AZREPOS
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
+
 namespace gcm::azrepos {
 
 // =============================================================================================
@@ -20,7 +27,7 @@ namespace AzureDevOpsConstants {
     GCM_STR(AadAuthorityBaseUrl, "https://login.microsoftonline.com");
     // Azure DevOps's app ID + default scopes
     GCM_STR(AzureDevOpsResourceId, "499b84ac-1321-427f-aa17-267ca6975798");
-    inline const QStringList AzureDevOpsDefaultScopes = {QStringLiteral("499b84ac-1321-427f-aa17-267ca6975798/.default")};
+    extern const QStringList AzureDevOpsDefaultScopes;
     // The GCM first party application client ID
     GCM_STR(ClientId, "d735b71b-9eee-4a4f-ad23-421660877ba6");
     // Visual Studio's client ID
@@ -165,7 +172,7 @@ private:
 struct AzureReposBinding
 {
     /// A local binding to "" means "do not inherit the global binding".
-    static inline const QString NoInherit = QString(QLatin1String(""));
+    static const QString NoInherit;
 
     QString organization;
     OptString globalUserName;

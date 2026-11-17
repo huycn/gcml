@@ -4,8 +4,8 @@ This is a less-bloated Linux-only C++/Qt rewrite of [Git Credential Manager](htt
 
 It is a port of Git Credential Manager 3.0.2 and a drop-in replacement for it on Linux: the same executable name,
 commands, settings, environment variables and credential store formats, so credentials stored by the .NET version
-stay readable. It needs no .NET runtime: a stripped release build is about 3 MB (2 MB with GitHub only) plus 1.7 MB for the dialog
-helper, using the system's Qt.
+stay readable. It needs no .NET runtime and uses the system's Qt: a MinSizeRel build is 1.3 MB (0.9 MB with GitHub
+only) plus 0.6 MB for the dialog helper.
 
 ## Features
 
@@ -32,6 +32,10 @@ cmake --build build-release
 ctest --test-dir build-release          # optional
 ```
 
+Build types: `Release` (`-O3`) and `MinSizeRel` (`-Os`, about a third smaller and just as fast in practice, since the
+program mostly waits on git, the network and the keyring) use link-time optimisation, drop unused code and produce
+stripped binaries. `RelWithDebInfo` (the default) and `Debug` keep symbols and debug information for debugging.
+
 Build options:
 
 | Option | Default | Meaning |
@@ -40,20 +44,21 @@ Build options:
 | `GCM_BUILD_UI` | `ON` | build the graphical helper `git-credential-manager-ui` |
 | `GCM_BUILD_TESTS` | `ON` | build the unit tests |
 
-For example, GitHub only, without tests:
+For example, the smallest build with GitHub only and without tests:
 
 ```sh
-cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DGCM_PROVIDERS=github -DGCM_BUILD_TESTS=OFF
+cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DGCM_PROVIDERS=github -DGCM_BUILD_TESTS=OFF
 ```
 
 ## Install
 
 ```sh
-cmake --install build-release --prefix ~/.local --strip      # or /usr/local with sudo
+cmake --install build-release --prefix ~/.local      # or: sudo cmake --install build-release --prefix /usr/local
 ```
 
 This installs `git-credential-manager` and `git-credential-manager-ui`; keep them in the same directory (the dialogs
-run in the second one). Then make it Git's credential helper and choose a store:
+run in the second one). Copying the two files from `build-release/src/app` and `build-release/src/ui` does the same.
+For a `RelWithDebInfo` build add `--strip` to install them without debug information. Then make it Git's credential helper and choose a store:
 
 ```sh
 git-credential-manager configure                          # sets credential.helper to its full path (global config)

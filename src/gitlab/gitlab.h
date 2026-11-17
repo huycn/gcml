@@ -5,6 +5,13 @@
 #include "core/auth/authentication.h"
 #include "core/hostprovider.h"
 
+#undef GCM_STR // see core/constants.h
+#ifdef GCM_DEFINE_STRINGS_GITLAB
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
+
 namespace gcm::gitlab {
 
 // =============================================================================================
@@ -159,7 +166,7 @@ public:
     QString getRefreshTokenServiceName(const GitRequest &request);
 
     /// The account GitLab expects with OAuth access tokens.
-    static inline const QString OAuthUserName = QStringLiteral("oauth2");
+    static const QString OAuthUserName; // "oauth2"
 
 private:
     /// A generated credential and, for OAuth, the refresh token to store with it.

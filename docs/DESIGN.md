@@ -85,6 +85,21 @@ Consequence: the two binaries must be installed side by side.
 | MSAL (Microsoft.Identity.Client) | own Entra ID client, `src/azrepos/entra.h` |
 | xUnit + Moq | Qt Test + hand-written fakes in `tests/infra` |
 
+### 2.5 String constants
+
+Upstream's string constants (`Constants`, `GitHubConstants`, ...) are `const QString` objects. A `QString` cannot be
+`constexpr`, and an `inline` variable in a header makes every file that includes it construct the object at start-up
+(this once cost 370 KB of code). So constants are declared in headers and defined once:
+
+- `GCM_STR(name, "value")` in a header declares `extern const QString name`. The one `.cpp` that defines
+  `GCM_DEFINE_STRINGS_<HEADER>` before its includes turns the same lines into definitions: `core/base/constants.cpp`,
+  `core/net/netstrings.cpp`, `github/githubstrings.cpp`, `gitlab/gitlabstrings.cpp`, `bitbucket/bitbucketstrings.cpp`,
+  `azrepos/azreposstrings.cpp`. Each header with `GCM_STR` lines selects the form right after its includes.
+- Other constants (lists, `QUrl`s, class statics) are declared `static const` / `extern const` in the header and
+  defined in the module's strings file (`core/app/appstrings.cpp`, `core/stores/storesstrings.cpp`, ...).
+- Never initialise a global object from a constant of another file (the initialisation order between files is
+  unspecified); use a literal or a reference, or build the value inside a function.
+
 ## 3. Layout
 
 ```
@@ -112,6 +127,10 @@ tests/e2e/              end-to-end scripts
   links and registers a provider when its library target exists (`GCM_HAVE_<PROVIDER>`), Azure Repos, Bitbucket,
   GitHub, GitLab at normal priority in upstream's order, Generic at low priority. Tests of a provider that is not
   built are skipped. Only Azure Repos links OpenSSL directly.
+- Build types: `Release` and `MinSizeRel` use link-time optimisation (`CMAKE_INTERPROCEDURAL_OPTIMIZATION_<CONFIG>`,
+  set when the toolchain supports it; GCC `-flto=auto`, clang ThinLTO), `-ffunction-sections -fdata-sections` with
+  `--gc-sections`, and link stripped (`-s`). `RelWithDebInfo` (default) and `Debug` do not. Test executables are built
+  the same way, so `ctest` on a Release build tests the optimised code.
 - Informational version: `<VERSION>+<git commit>` when built from a git checkout, else `<VERSION>`
   (`gcmInformationalVersion()`, used by `--version`, TRACE2 `version` and `diagnose`).
 

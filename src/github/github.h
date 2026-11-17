@@ -8,6 +8,13 @@
 #include "core/auth/oauth2.h"
 #include "core/hostprovider.h"
 
+#undef GCM_STR // see core/constants.h
+#ifdef GCM_DEFINE_STRINGS_GITHUB
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
+
 namespace gcm::github {
 
 // =============================================================================================
@@ -30,7 +37,7 @@ namespace GitHubConstants {
     GCM_STR(OAuthTokenEndpointRelativeUri, "/login/oauth/access_token");
     GCM_STR(OAuthDeviceEndpointRelativeUri, "/login/device/code");
 
-    inline const QStringList InvalidUnderscoreLogins = {QStringLiteral("pj_nitin"), QStringLiteral("up_the_irons")};
+    extern const QStringList InvalidUnderscoreLogins;
 
     GCM_STR(GitHubApiAcceptsHeaderValue, "application/vnd.github.v3+json");
     GCM_STR(GitHubOptHeader, "X-GitHub-OTP");
@@ -239,7 +246,7 @@ public:
 class GitHubAuthentication : public AuthenticationBase, public IGitHubAuthentication
 {
 public:
-    static inline const QStringList AuthorityIds = {QStringLiteral("github")};
+    static const QStringList AuthorityIds;
 
     explicit GitHubAuthentication(ICommandContext &context) : AuthenticationBase(context) {}
 

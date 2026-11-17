@@ -35,10 +35,11 @@ namespace Env = AzureDevOpsConstants::EnvironmentVariables;
 
 const QString HelperKey = Q("credential.helper");
 const QString AzDevUseHttpPathKey = Q("credential.https://dev.azure.com.useHttpPath");
-const QString AzDevUseSharedCacheKey = Q("credential.") + AzureDevOpsConstants::GitConfiguration::Credential::UseSharedCache;
+// Literal (as upstream): a global cannot be built from a constant of another file (initialisation order)
+const QString AzDevUseSharedCacheKey = Q("credential.azreposUseMicrosoftSharedCache");
 const QString OrgName = Q("org");
 const QString CommonAuthority = Q("https://login.microsoftonline.com/common");
-const QStringList ExpectedScopes = AzureDevOpsConstants::AzureDevOpsDefaultScopes;
+const QStringList &ExpectedScopes = AzureDevOpsConstants::AzureDevOpsDefaultScopes; // a reference: bound at compile time
 
 QString userKey(const QString &org) { return Q("credential.azrepos:org/%1.username").arg(org); }
 QString authorityKey(const QString &org) { return Q("credential.azrepos:org/%1.azureAuthority").arg(org); }

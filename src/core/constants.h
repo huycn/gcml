@@ -4,7 +4,19 @@
 #include "core/common.h"
 #include "core/gitcapabilities.h"
 
-#define GCM_STR(name, value) inline const QString name = QStringLiteral(value)
+// String constants. A QString cannot be constexpr, and an inline variable would make every file that includes the header
+// construct it at start-up, so GCM_STR declares the constant and exactly one .cpp per header defines it: the one that
+// defines GCM_DEFINE_STRINGS_<HEADER> before its includes (see constants.cpp). Each header with GCM_STR constants
+// selects the form below right before using it. Do not initialise a global object of another file from these
+// constants: the order of initialisation between files is unspecified.
+#define GCM_STR_DECLARE(name, value) extern const QString name
+#define GCM_STR_DEFINE(name, value) extern const QString name; const QString name = QStringLiteral(value)
+#undef GCM_STR
+#ifdef GCM_DEFINE_STRINGS_CONSTANTS
+#define GCM_STR GCM_STR_DEFINE
+#else
+#define GCM_STR GCM_STR_DECLARE
+#endif
 
 namespace gcm::Constants {
 

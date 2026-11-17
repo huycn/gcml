@@ -140,7 +140,8 @@ password=at-42
 [exit 0]" "$out"
 check "oauth: mode prompt, then device code dialog" "Git Credential Manager|
 Device code authentication|" "$(cat "$GCM_UI_SCRIPT_LOG")"
-if pgrep -f "$HELPER" >/dev/null; then
+# A process whose command line starts with the helper (not one that merely mentions its path, like this script's caller)
+if pgrep -f "^$(printf '%s' "$HELPER" | sed 's/[][\.*^$+?(){}|]/\\&/g')( |$)" >/dev/null; then
     echo "FAIL  oauth: device code dialog still running"
     failures=$((failures + 1))
 else
